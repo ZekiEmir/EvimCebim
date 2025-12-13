@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.Models;
+using EvimCebim.Models;
 
 namespace WebApplication1.Controllers
 {

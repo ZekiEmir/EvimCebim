@@ -1,4 +1,4 @@
-namespace WebApplication1.Models
+﻿namespace EvimCebim.Models
 {
     public class ErrorViewModel
     {
