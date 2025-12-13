@@ -1,0 +1,72 @@
+﻿@model EvimCebim.Models.Expense
+
+@{
+    ViewData["Title"] = "Kaydı Sil";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-lg">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> Silme Onayı
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning text-center">
+                        <strong>Dikkat!</strong> Bu kaydı silmek istediğinize emin misiniz? <br />
+                        Bu işlem geri alınamaz.
+                    </div>
+
+                    <h4 class="text-center text-muted mb-4">Gider Detayları</h4>
+
+                    <dl class="row">
+                        <dt class="col-sm-4 text-end">
+                            @Html.DisplayNameFor(model => model.Title):
+                        </dt>
+                        <dd class="col-sm-8 fw-bold">
+                            @Html.DisplayFor(model => model.Title)
+                        </dd>
+
+                        <dt class="col-sm-4 text-end">
+                            @Html.DisplayNameFor(model => model.Amount):
+                        </dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-success">
+                                @Html.DisplayFor(model => model.Amount) ₺
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4 text-end">
+                            @Html.DisplayNameFor(model => model.Date):
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Model.Date.ToString("dd.MM.yyyy")
+                        </dd>
+
+                        <dt class="col-sm-4 text-end">
+                            @Html.DisplayNameFor(model => model.Category):
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Category)
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="card-footer text-center d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="fa-solid fa-arrow-left me-2"></i>İptal Et
+                    </a>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="Id" />
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fa-solid fa-trash-can me-2"></i>Evet, Sil!
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

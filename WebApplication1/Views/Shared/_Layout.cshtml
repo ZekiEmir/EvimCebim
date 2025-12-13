@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EvimCebim</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/flatly/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EvimCebim.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-wallet me-2"></i>EvimCebim
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Expenses" asp-action="Index">Giderlerim</a>
+                        </li>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - EvimCebim - <a asp-area="" asp-controller="Home" asp-action="Privacy">Hakkında</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+   @*  -------------------------------------------------------------------------------------------------------------------------------------------------- *@
+
+
+
+    <div class="card shadow-lg border-0 music-player-card"
+         style="position: fixed; bottom: 20px; right: 20px; width: 280px; z-index: 9999; border-radius: 50px; background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); transition: all 0.3s ease;">
+
+        <div class="card-body p-2 d-flex align-items-center">
+            <button id="playBtn" onclick="userToggleMusic()" class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                    style="width: 50px; height: 50px; transition: transform 0.2s;">
+                <i id="musicIcon" class="fa-solid fa-play text-danger fa-lg"></i>
+            </button>
+
+            <div class="ms-3 text-white" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
+                <h6 class="mb-0 fw-bold">Tak Tak Tak</h6>
+                <small style="font-size: 0.8rem;">Belkıs Özener</small>
+            </div>
+
+            <div class="ms-auto me-3 d-none" id="equalizer">
+                <i class="fa-solid fa-music fa-bounce text-white"></i>
+            </div>
+        </div>
+    </div>
+
+    <audio id="myAudio" loop>
+        <source src="@Url.Content("~/audio/taktak.mp3")" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Elementleri Seç
+        var audio = document.getElementById("myAudio");
+        var btn = document.getElementById("playBtn");
+        var icon = document.getElementById("musicIcon");
+        var eq = document.getElementById("equalizer");
+
+        // --- AKILLI HAFIZA SİSTEMİ ---
+
+        // 1. Sayfa Yüklendiğinde: "Nerede kalmıştık?"
+        window.addEventListener('load', function() {
+            // Hafızadan verileri oku
+            var savedTime = localStorage.getItem("musicTime");
+            var shouldPlay = localStorage.getItem("musicPlaying");
+
+            // Eğer kayıtlı bir zaman varsa oraya atla
+            if (savedTime) {
+                audio.currentTime = parseFloat(savedTime);
+            }
+
+            // Eğer müzik "Çalıyor" durumundaysa devam et
+            if (shouldPlay === "true") {
+                var promise = audio.play();
+                if (promise !== undefined) {
+                    promise.then(_ => {
+                        updateUI(true); // Başarılı
+                    }).catch(error => {
+                        // Tarayıcı otomatik engellediyse, ilk tıkta aç
+                        document.body.addEventListener('click', function() {
+                            if (localStorage.getItem("musicPlaying") === "true") {
+                                audio.play();
+                                updateUI(true);
+                            }
+                        }, { once: true });
+                    });
+                }
+            }
+        });
+
+        // 2. Sayfadan Ayrılırken: "Şu anki durumu kaydet"
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem("musicTime", audio.currentTime);
+            // Durum zaten buton fonksiyonunda kaydediliyor ama garanti olsun
+            localStorage.setItem("musicPlaying", !audio.paused);
+        });
+
+        // 3. Kullanıcı Butona Basarsa
+        function userToggleMusic() {
+            if (!audio.paused) {
+                audio.pause();
+                localStorage.setItem("musicPlaying", "false"); // Durduğunu kaydet
+                updateUI(false);
+            } else {
+                audio.play();
+                localStorage.setItem("musicPlaying", "true"); // Çaldığını kaydet
+                updateUI(true);
+            }
+        }
+
+        // Arayüz Güncelleme (İkonlar vb.)
+        function updateUI(isPlaying) {
+            if (isPlaying) {
+                icon.className = "fa-solid fa-pause text-danger fa-lg";
+                eq.classList.remove("d-none");
+                btn.style.transform = "scale(1.1)";
+            } else {
+                icon.className = "fa-solid fa-play text-danger fa-lg";
+                eq.classList.add("d-none");
+                btn.style.transform = "scale(1)";
+            }
+        }
+    </script>
+   @*  -------------------------------------------------------------------------------------------------------------------------------------------------- *@
+</body>
+</html>

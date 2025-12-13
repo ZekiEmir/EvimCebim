@@ -1,0 +1,66 @@
+﻿@model EvimCebim.Models.Expense
+
+@{
+    ViewData["Title"] = "Harcama Detayı";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-info">
+
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">
+                        <i class="fa-solid fa-circle-info me-2"></i> Harcama Detayı
+                    </h3>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-4 text-center border-bottom pb-3">
+                        <span class="text-muted small">Harcama Başlığı</span>
+                        <h2 class="text-primary mt-1">
+                            <i class="fa-solid fa-receipt me-2"></i>@Html.DisplayFor(model => model.Title)
+                        </h2>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6 text-center border-end">
+                            <span class="text-muted small">Tutar</span>
+                            <div class="mt-1">
+                                <span class="badge bg-success py-2 px-3 fs-5">
+                                    @Html.DisplayFor(model => model.Amount) ₺
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-6 text-center">
+                            <span class="text-muted small">Tarih</span>
+                            <div class="fs-5 mt-1 text-dark">
+                                <i class="fa-regular fa-calendar-days me-2"></i>@Model.Date.ToString("dd.MM.yyyy")
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4 bg-light p-2 rounded">
+                        <span class="text-muted small">Kategori:</span>
+                        <span class="fw-bold fs-5 ms-2 text-dark">
+                            <i class="fa-solid fa-layer-group me-1"></i> @Html.DisplayFor(model => model.Category)
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="card-footer text-center p-3">
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning btn-lg me-2 text-white">
+                        <i class="fa-solid fa-pen-to-square me-2"></i>Düzenle
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="fa-solid fa-arrow-left me-2"></i>Listeye Dön
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
