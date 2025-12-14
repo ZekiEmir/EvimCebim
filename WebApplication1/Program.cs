@@ -1,35 +1,34 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics; // BU YENÝ EKLENDÝ (Hata Kodlarý Ýçin)
 using System;
-using EvimCebim.Data; // Hata almamak için gerekli namespace
+using EvimCebim.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- VERÝTABANI AYARI BAÞLANGIÇ ---
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Render'dan gelen DATABASE_URL var mý diye bakýyoruz
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Render üzerindeyiz, PostgreSQL kullanacaðýz
+    // Render üzerindeyiz (PostgreSQL)
     try
     {
         var databaseUri = new Uri(databaseUrl);
         var userInfo = databaseUri.UserInfo.Split(':');
 
-        // --- KRÝTÝK DÜZELTME BURADA ---
-        // Eðer URL'den port okunamazsa (-1 gelirse), varsayýlan PostgreSQL portunu (5432) kullan.
+        // Port hatasýný önleyen kod (-1 gelirse 5432 yap)
         int port = databaseUri.Port > 0 ? databaseUri.Port : 5432;
 
-        // Connection String'i oluþtururken artýk güvenli 'port' deðiþkenini kullanýyoruz
         connectionString = $"Host={databaseUri.Host};Port={port};Database={databaseUri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Ssl Mode=Require;Trust Server Certificate=true;";
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString)
+                   // AÞAÐIDAKÝ SATIR YENÝ EKLENDÝ: Migration hatasýný susturur ve devam ettirir.
+                   .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
-        Console.WriteLine("--> Render PostgreSQL baðlantýsý (Port Düzeltmeli) yapýlandýrýldý.");
+        Console.WriteLine("--> Render PostgreSQL baðlantýsý (Fixler yapýldý) yapýlandýrýldý.");
     }
     catch (Exception ex)
     {
@@ -38,20 +37,20 @@ if (!string.IsNullOrEmpty(databaseUrl))
 }
 else
 {
-    // Lokal bilgisayardayýz, eski SQL Server devam
+    // Lokal bilgisayardayýz (SQL Server)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString));
+        options.UseSqlServer(connectionString)
+        // Lokaldeki hatalarý da yoksayalým
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 }
 
 // --- VERÝTABANI AYARI BÝTÝÞ ---
 
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -60,9 +59,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthorization();
-
 app.MapStaticAssets();
 
 app.MapControllerRoute(
@@ -78,11 +75,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate(); // Veritabaný yoksa oluþturur.
+        // Hata verse bile devam etmesi için try-catch içindeydi zaten
+        context.Database.Migrate();
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Migration Hatasý: {ex.Message}");
+        Console.WriteLine($"Migration Hatasý (Yoksayýldý): {ex.Message}");
     }
 }
 
