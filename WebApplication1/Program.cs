@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics; // BU YENÝ EKLENDÝ (Hata Kodlar
 using System;
 using EvimCebim.Data;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // --- VERÝTABANI AYARI BAÞLANGIÇ ---
