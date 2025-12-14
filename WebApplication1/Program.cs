@@ -70,9 +70,6 @@ app.MapControllerRoute(
 
 
 // OTOMATÝK TABLO OLUÞTURMA (MIGRATION)
-// ... (Üst kýsýmlar ayný kalsýn) ...
-
-// OTOMATÝK TABLO SIFIRLAMA VE OLUÞTURMA
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -80,17 +77,17 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<EvimCebim.Data.ApplicationDbContext>();
 
-        //  DÝKKAT: Bu komut veritabanýný önce tamamen siler (temizlik için)
-        // Sonra sýfýrdan tablolarla birlikte tekrar oluþturur.
-        context.Database.EnsureDeleted();
+        //  DÝKKAT: Aþaðýdaki 'EnsureDeleted' satýrýný ARTIK SÝLÝYORUZ!
+        // context.Database.EnsureDeleted();  <-- BU SATIRI SÝL VEYA YORUMA AL
+
+        // Sadece bu kalsýn. Bu komut: "Veritabaný yoksa oluþtur, varsa DOKUNMA" der.
         context.Database.EnsureCreated();
 
-        Console.WriteLine("--> Veritabaný SIFIRLANDI ve yeniden oluþturuldu. Tablolar hazýr.");
+        Console.WriteLine("--> Veritabaný kontrol edildi (Silinmedi, korundu).");
     }
     catch (Exception ex)
     {
-        // Hata olursa konsola yaz ama siteyi çökertme
-        Console.WriteLine($"Veritabaný Oluþturma Hatasý: {ex.Message}");
+        Console.WriteLine($"Veritabaný Kontrol Hatasý: {ex.Message}");
     }
 }
 
