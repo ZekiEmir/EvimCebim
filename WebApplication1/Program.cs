@@ -75,12 +75,14 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        // Hata verse bile devam etmesi için try-catch içindeydi zaten
-        context.Database.Migrate();
+
+        // SÝHÝRLÝ DOKUNUÞ BURADA:
+        context.Database.EnsureCreated();
+        Console.WriteLine("--> Veritabaný ve Tablolar (EnsureCreated ile) hazirlandi.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Migration Hatasý (Yoksayýldý): {ex.Message}");
+        Console.WriteLine($"Tablo Oluþturma Hatasý: {ex.Message}");
     }
 }
 
