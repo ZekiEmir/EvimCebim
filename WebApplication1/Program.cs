@@ -69,20 +69,27 @@ app.MapControllerRoute(
 
 
 // OTOMATÝK TABLO OLUÞTURMA (MIGRATION)
+// ... (Üst kýsýmlar ayný kalsýn) ...
+
+// OTOMATÝK TABLO SIFIRLAMA VE OLUÞTURMA
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var context = services.GetRequiredService<EvimCebim.Data.ApplicationDbContext>();
 
-        // SÝHÝRLÝ DOKUNUÞ BURADA:
+        //  DÝKKAT: Bu komut veritabanýný önce tamamen siler (temizlik için)
+        // Sonra sýfýrdan tablolarla birlikte tekrar oluþturur.
+        context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
-        Console.WriteLine("--> Veritabaný ve Tablolar (EnsureCreated ile) hazirlandi.");
+
+        Console.WriteLine("--> Veritabaný SIFIRLANDI ve yeniden oluþturuldu. Tablolar hazýr.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Tablo Oluþturma Hatasý: {ex.Message}");
+        // Hata olursa konsola yaz ama siteyi çökertme
+        Console.WriteLine($"Veritabaný Oluþturma Hatasý: {ex.Message}");
     }
 }
 
