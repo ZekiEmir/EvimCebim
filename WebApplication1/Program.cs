@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
-// Hata vermemesi için gerekli olan satýrý ekledim:
-using EvimCebim.Data;
+using EvimCebim.Data; // Hata almamak için gerekli namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +19,17 @@ if (!string.IsNullOrEmpty(databaseUrl))
         var databaseUri = new Uri(databaseUrl);
         var userInfo = databaseUri.UserInfo.Split(':');
 
-        // Render'ýn verdiði URL'yi C#'ýn anlayacaðý formata çeviriyoruz
-        connectionString = $"Host={databaseUri.Host};Port={databaseUri.Port};Database={databaseUri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Ssl Mode=Require;Trust Server Certificate=true;";
+        // --- KRÝTÝK DÜZELTME BURADA ---
+        // Eðer URL'den port okunamazsa (-1 gelirse), varsayýlan PostgreSQL portunu (5432) kullan.
+        int port = databaseUri.Port > 0 ? databaseUri.Port : 5432;
 
-        // DÜZELTME: Context adýnýn tam yolunu yazdýk (EvimCebim.Data.ApplicationDbContext)
-        builder.Services.AddDbContext<EvimCebim.Data.ApplicationDbContext>(options =>
+        // Connection String'i oluþtururken artýk güvenli 'port' deðiþkenini kullanýyoruz
+        connectionString = $"Host={databaseUri.Host};Port={port};Database={databaseUri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Ssl Mode=Require;Trust Server Certificate=true;";
+
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        Console.WriteLine("--> Render PostgreSQL baðlantýsý yapýlandýrýldý.");
+        Console.WriteLine("--> Render PostgreSQL baðlantýsý (Port Düzeltmeli) yapýlandýrýldý.");
     }
     catch (Exception ex)
     {
@@ -37,8 +39,7 @@ if (!string.IsNullOrEmpty(databaseUrl))
 else
 {
     // Lokal bilgisayardayýz, eski SQL Server devam
-    // DÜZELTME: Context adýnýn tam yolunu yazdýk
-    builder.Services.AddDbContext<EvimCebim.Data.ApplicationDbContext>(options =>
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
 }
 
@@ -76,8 +77,8 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<EvimCebim.Data.ApplicationDbContext>();
-        context.Database.Migrate(); // Veritabaný yoksa oluþturur, tablolarý ekler.
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate(); // Veritabaný yoksa oluþturur.
     }
     catch (Exception ex)
     {
