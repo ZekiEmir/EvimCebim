@@ -20,5 +20,8 @@ namespace EvimCebim.Models
         [Required(ErrorMessage = "Katagori boş bırakılamaz")]
         [Display(Name = "Kategori")]
         public string Category { get; set; } = string.Empty; //Fatura, Mutfak
+
+        // Bu harcamayı yapan kullanıcının kimliği (ID'si) burada tutulacak.
+        public string? AppUserId { get; set; }
     }
 }

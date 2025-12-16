@@ -1,13 +1,15 @@
-﻿using EvimCebim.Models;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using EvimCebim.Models;
+
 namespace EvimCebim.Data
 {
-    public class ApplicationDbContext: DbContext
+    public class ApplicationDbContext : IdentityDbContext // IdentityDbContext'ten miras alıyor
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext>options): base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
         }
-        //veritabanındaki 'Expenses' tablosu bizim 'Expense' modelimize karşılık gelir.
         public DbSet<Expense> Expenses { get; set; }
     }
 }

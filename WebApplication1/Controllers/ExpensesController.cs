@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EvimCebim.Data;
 using EvimCebim.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EvimCebim.Controllers
 {
+    [Authorize] // Giriş zorunlu
     public class ExpensesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,7 +25,9 @@ namespace EvimCebim.Controllers
         // GET: Expenses
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Expenses.ToListAsync());
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // Sadece giriş yapan kullanıcının verileri
+            return View(await _context.Expenses.Where(x => x.AppUserId == userId).ToListAsync());
         }
 
         // GET: Expenses/Details/5
@@ -40,29 +45,30 @@ namespace EvimCebim.Controllers
                 return NotFound();
             }
 
+            // GÜVENLİK KONTROLÜ: Başkasının detayını görmesin
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (expense.AppUserId != userId)
+            {
+                return Unauthorized(); 
+            }
+
             return View(expense);
         }
 
-        // GET: Expenses/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Expenses/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,Amount,Date,Category")] Expense expense)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(expense);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(expense);
+             // Validasyon iptal, direkt ID basıp ekliyoruz
+             expense.AppUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+             _context.Add(expense);
+             await _context.SaveChangesAsync();
+             return RedirectToAction(nameof(Index));
         }
 
         // GET: Expenses/Edit/5
@@ -78,6 +84,13 @@ namespace EvimCebim.Controllers
             {
                 return NotFound();
             }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (expense.AppUserId != userId)
+            {
+                return Unauthorized();
+            }
+
             return View(expense);
         }
 
@@ -92,6 +105,18 @@ namespace EvimCebim.Controllers
             {
                 return NotFound();
             }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            // Güvenlik: Başkasının verisini editleyemesin
+            var existingExpense = await _context.Expenses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+            if (existingExpense == null || existingExpense.AppUserId != userId)
+            {
+                 return Unauthorized();
+            }
+            
+            // AppUserId kaybolmasın diye tekrar atıyoruz
+            expense.AppUserId = userId;
 
             if (ModelState.IsValid)
             {
@@ -131,6 +156,12 @@ namespace EvimCebim.Controllers
                 return NotFound();
             }
 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (expense.AppUserId != userId)
+            {
+                return Unauthorized();
+            }
+
             return View(expense);
         }
 
@@ -139,13 +170,23 @@ namespace EvimCebim.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var expense = await _context.Expenses.FindAsync(id);
+            
             if (expense != null)
             {
-                _context.Expenses.Remove(expense);
+                // Güvenlik: Sadece sahibi silebilir
+                if (expense.AppUserId == userId) 
+                {
+                    _context.Expenses.Remove(expense);
+                    await _context.SaveChangesAsync();
+                }
+                else 
+                {
+                    return Unauthorized();
+                }
             }
-
-            await _context.SaveChangesAsync();
+            
             return RedirectToAction(nameof(Index));
         }
 

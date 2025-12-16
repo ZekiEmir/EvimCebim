@@ -1,52 +1,53 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics; // BU YENÝ EKLENDÝ (Hata Kodlarý Ýçin)
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using System;
 using EvimCebim.Data;
 
+// PostgreSQL Tarih hatasÄ± iÃ§in fix
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
-// --- VERÝTABANI AYARI BAÞLANGIÇ ---
-
+// --- VERÄ°TABANI BAÄžLANTISI (RENDER & LOCAL) ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Render üzerindeyiz (PostgreSQL)
-    try
+    // Render Ã¼zerindeyiz (PostgreSQL)
+    try 
     {
         var databaseUri = new Uri(databaseUrl);
         var userInfo = databaseUri.UserInfo.Split(':');
-
-        // Port hatasýný önleyen kod (-1 gelirse 5432 yap)
-        int port = databaseUri.Port > 0 ? databaseUri.Port : 5432;
-
+        int port = databaseUri.Port > 0 ? databaseUri.Port : 5432; // Port fix
+        
         connectionString = $"Host={databaseUri.Host};Port={port};Database={databaseUri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Ssl Mode=Require;Trust Server Certificate=true;";
-
+        
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString)
-                   // AÞAÐIDAKÝ SATIR YENÝ EKLENDÝ: Migration hatasýný susturur ve devam ettirir.
                    .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
-
-        Console.WriteLine("--> Render PostgreSQL baðlantýsý (Fixler yapýldý) yapýlandýrýldý.");
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"--> Baðlantý hatasý: {ex.Message}");
-    }
+    catch (Exception ex) { Console.WriteLine($"BaÄŸlantÄ± HatasÄ±: {ex.Message}"); }
 }
 else
 {
-    // Lokal bilgisayardayýz (SQL Server)
+    // Local (SQL Server)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString)
-        // Lokaldeki hatalarý da yoksayalým
-        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
+        options.UseSqlServer(connectionString));
 }
 
-// --- VERÝTABANI AYARI BÝTÝÞ ---
-
+// --- IDENTITY AYARLARI ---
+builder.Services.AddDefaultIdentity<IdentityUser>(options => 
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 3;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
 
@@ -59,36 +60,22 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
-app.MapStaticAssets();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+app.UseAuthentication(); // Ã–nce kimlik
+app.UseAuthorization();  // Sonra yetki
 
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages(); // Identity sayfalarÄ± iÃ§in
 
-// OTOMATÝK TABLO OLUÞTURMA (MIGRATION)
+// VERÄ°TABANI MIGRATION & OLUÅžTURMA
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<EvimCebim.Data.ApplicationDbContext>();
-
-        //  DÝKKAT: Aþaðýdaki 'EnsureDeleted' satýrýný ARTIK SÝLÝYORUZ!
-        // context.Database.EnsureDeleted();  <-- BU SATIRI SÝL VEYA YORUMA AL
-
-        // Sadece bu kalsýn. Bu komut: "Veritabaný yoksa oluþtur, varsa DOKUNMA" der.
-        context.Database.EnsureCreated();
-
-        Console.WriteLine("--> Veritabaný kontrol edildi (Silinmedi, korundu).");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Veritabaný Kontrol Hatasý: {ex.Message}");
-    }
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    // context.Database.EnsureDeleted(); // GEREKTÄ°ÄžÄ°NDE AÃ‡ILACAK
+    context.Database.EnsureCreated();
 }
 
 app.Run();
