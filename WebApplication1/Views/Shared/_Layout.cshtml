@@ -57,17 +57,17 @@
 
 
     <div class="card shadow-lg border-0 music-player-card"
-         style="position: fixed; bottom: 20px; right: 20px; width: 280px; z-index: 9999; border-radius: 50px; background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); transition: all 0.3s ease;">
+         style="position: fixed; bottom: 20px; right: 20px; width: 280px; z-index: 9999; border-radius: 50px; background: linear-gradient(45deg, #2b5876 0%, #4e4376 100%); transition: all 0.3s ease;">
 
         <div class="card-body p-2 d-flex align-items-center">
             <button id="playBtn" onclick="userToggleMusic()" class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center"
                     style="width: 50px; height: 50px; transition: transform 0.2s;">
-                <i id="musicIcon" class="fa-solid fa-play text-danger fa-lg"></i>
+                <i id="musicIcon" class="fa-solid fa-play text-primary fa-lg"></i>
             </button>
 
-            <div class="ms-3 text-white" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
-                <h6 class="mb-0 fw-bold">Tak Tak Tak</h6>
-                <small style="font-size: 0.8rem;">Belkıs Özener</small>
+            <div class="ms-3 text-white" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+                <h6 class="mb-0 fw-bold">Lofi Vibe</h6>
+                <small style="font-size: 0.8rem;">Relaxing Beats</small>
             </div>
 
             <div class="ms-auto me-3 d-none" id="equalizer">
@@ -76,77 +76,86 @@
         </div>
     </div>
 
-    <audio id="myAudio" loop>
-        <source src="@Url.Content("~/audio/taktak.mp3")" type="audio/mpeg">
-    </audio>
+    <!-- Hidden YouTube Player Container -->
+    <div id="youtube-player" style="display:none;"></div>
 
     <script>
         // Elementleri Seç
-        var audio = document.getElementById("myAudio");
         var btn = document.getElementById("playBtn");
         var icon = document.getElementById("musicIcon");
         var eq = document.getElementById("equalizer");
+        
+        // YouTube Oyuncusu Değişkeni
+        var player;
+        var isPlayerReady = false;
 
-        // --- AKILLI HAFIZA SİSTEMİ ---
+        // 1. YouTube IFrame API'yi Yükle
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // 1. Sayfa Yüklendiğinde: "Nerede kalmıştık?"
-        window.addEventListener('load', function() {
-            // Hafızadan verileri oku
-            var savedTime = localStorage.getItem("musicTime");
-            var shouldPlay = localStorage.getItem("musicPlaying");
-
-            // Eğer kayıtlı bir zaman varsa oraya atla
-            if (savedTime) {
-                audio.currentTime = parseFloat(savedTime);
-            }
-
-            // Eğer müzik "Çalıyor" durumundaysa devam et
-            if (shouldPlay === "true") {
-                var promise = audio.play();
-                if (promise !== undefined) {
-                    promise.then(_ => {
-                        updateUI(true); // Başarılı
-                    }).catch(error => {
-                        // Tarayıcı otomatik engellediyse, ilk tıkta aç
-                        document.body.addEventListener('click', function() {
-                            if (localStorage.getItem("musicPlaying") === "true") {
-                                audio.play();
-                                updateUI(true);
-                            }
-                        }, { once: true });
-                    });
+        // 2. API Hazır Olduğunda Oyuncuyu Oluştur
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: 'jfKfPfyJRdk', // Lofi Girl 24/7 Radio ID
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
                 }
-            }
-        });
+            });
+        }
 
-        // 2. Sayfadan Ayrılırken: "Şu anki durumu kaydet"
-        window.addEventListener('beforeunload', function() {
-            localStorage.setItem("musicTime", audio.currentTime);
-            // Durum zaten buton fonksiyonunda kaydediliyor ama garanti olsun
-            localStorage.setItem("musicPlaying", !audio.paused);
-        });
-
-        // 3. Kullanıcı Butona Basarsa
-        function userToggleMusic() {
-            if (!audio.paused) {
-                audio.pause();
-                localStorage.setItem("musicPlaying", "false"); // Durduğunu kaydet
-                updateUI(false);
-            } else {
-                audio.play();
-                localStorage.setItem("musicPlaying", "true"); // Çaldığını kaydet
-                updateUI(true);
+        // 3. Oyuncu Hazır Olduğunda
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            // Hafızadan durumu kontrol et
+            var shouldPlay = localStorage.getItem("musicPlaying");
+            if (shouldPlay === "true") {
+                player.playVideo();
             }
         }
 
-        // Arayüz Güncelleme (İkonlar vb.)
+        // 4. Durum Değiştiğinde (Örn: Tamponlanıyor, Oynatılıyor)
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                updateUI(true);
+                localStorage.setItem("musicPlaying", "true");
+            } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                updateUI(false);
+                localStorage.setItem("musicPlaying", "false");
+            }
+        }
+
+        // 5. Kullanıcı Butona Bastığında
+        function userToggleMusic() {
+            if (!isPlayerReady) return;
+
+            var playerState = player.getPlayerState();
+            
+            if (playerState == YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        // Arayüz Güncelleme
         function updateUI(isPlaying) {
             if (isPlaying) {
-                icon.className = "fa-solid fa-pause text-danger fa-lg";
+                icon.className = "fa-solid fa-pause text-primary fa-lg";
                 eq.classList.remove("d-none");
                 btn.style.transform = "scale(1.1)";
             } else {
-                icon.className = "fa-solid fa-play text-danger fa-lg";
+                icon.className = "fa-solid fa-play text-primary fa-lg";
                 eq.classList.add("d-none");
                 btn.style.transform = "scale(1)";
             }

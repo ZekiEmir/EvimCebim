@@ -1,32 +1,48 @@
 ﻿@{
-    ViewData["Title"] = "Hakkında";
+    ViewData["Title"] = "Geliştirici Hakkında";
 }
 
-<div class="container mt-5">
-    <div class="card shadow-lg">
-        <div class="card-header bg-primary text-white">
-            <h3>Proje Hakkında</h3>
-        </div>
-        <div class="card-body">
-            <h5 class="card-title">EvimCebim - Gider Takip Sistemi</h5>
-            <p class="card-text">
-                Bu proje, öğrenci evlerinde veya bireysel bütçe yönetiminde karşılaşılan hesap karışıklıklarını önlemeyi amaçlar.
-            </p>
+<div class="container mt-5 mb-5">
+    <div class="card shadow-lg border-0 overflow-hidden">
+        <div class="row g-0">
+            <!-- Sol Taraf: Fotoğraf Alanı -->
+            <div class="col-md-4 bg-light d-flex align-items-center justify-content-center p-4">
+                <div class="position-relative">
+                    <img src="~/img/developer.jpg" alt="Zeki Emir Kuş" 
+                         class="img-fluid rounded-circle shadow" 
+                         style="width: 250px; height: 250px; object-fit: cover; object-position: top; border: 5px solid #fff;">
+                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle p-3 border border-white border-3">
+                        <i class="fa-solid fa-code text-white fa-xl"></i>
+                    </div>
+                </div>
+            </div>
 
-            <hr />
+            <!-- Sağ Taraf: Bilgiler -->
+            <div class="col-md-8">
+                <div class="card-body p-5">
+                    <h5 class="text-primary text-uppercase letter-spacing-2 mb-1">Geliştirici</h5>
+                    <h2 class="fw-bold mb-3">Zeki Emir Kuş</h2>
+                    <h5 class="text-muted mb-4">Bilgisayar Mühendisliği</h5>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-dark p-2"><i class="fa-solid fa-id-card me-2"></i>16008124009</span>
+                    </div>
 
-            <h6>📌 Kullanılan Teknolojiler:</h6>
-            <ul>
-                <li>ASP.NET Core MVC 8.0</li>
-                <li>Entity Framework Core (Code First)</li>
-                <li>SQL Server / PostgreSQL</li>
-                <li>Bootstrap 5 & Bootswatch Flatly</li>
-            </ul>
+                    <hr class="my-4">
 
-            <div class="alert alert-info mt-4">
-                <strong>Geliştirici:</strong> Zeki Emir Kuş <br />
-                <strong>Öğrenci No:</strong> 16008124009 <br />
-                <strong>Bölüm:</strong> Bilgisayar Mühendisliği
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-laptop-code me-2 text-primary"></i>Proje: EvimCebim</h5>
+                    <p class="text-secondary">
+                        Öğrenci evlerinde veya bireysel bütçe yönetiminde karşılaşılan hesap karışıklıklarını önlemeyi amaçlayan, modern ve kullanıcı dostu bir gider takip sistemi.
+                    </p>
+
+                    <h6 class="fw-bold mt-4 mb-3">🛠 Kullanılan Teknolojiler</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-microsoft me-1"></i>ASP.NET Core 8.0</span>
+                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-database me-1"></i>Entity Framework</span>
+                        <span class="badge bg-light text-dark border"><i class="fa-brands fa-bootstrap me-1"></i>Bootstrap 5</span>
+                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-server me-1"></i>PostgreSQL</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
