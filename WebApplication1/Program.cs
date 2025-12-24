@@ -78,6 +78,7 @@ app.MapRazorPages(); // Identity sayfaları için
         if (!string.IsNullOrEmpty(databaseUrl)) 
         {
              // PostgreSQL (Render) -> Migration Kullan
+             context.Database.EnsureDeleted(); // <-- BU SATIR VERİYİ SIFIRLAR!
              context.Database.Migrate();
         }
         else 
