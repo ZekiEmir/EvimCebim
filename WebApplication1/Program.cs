@@ -69,13 +69,22 @@ app.UseAuthorization();  // Sonra yetki
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages(); // Identity sayfaları için
 
-// VERİTABANI MIGRATION & OLUŞTURMA
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    // context.Database.EnsureDeleted(); // GEREKTİĞİNDE AÇILACAK
-    context.Database.EnsureCreated();
-}
+    // VERİTABANI MIGRATION & OLUŞTURMA
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        if (!string.IsNullOrEmpty(databaseUrl)) 
+        {
+             // PostgreSQL (Render) -> Migration Kullan
+             context.Database.Migrate();
+        }
+        else 
+        {
+             // Local (SQL Server) -> EnsureCreated (Hızlı çözüm)
+             context.Database.EnsureCreated();
+        }
+    }
 
-app.Run();
+    app.Run();
