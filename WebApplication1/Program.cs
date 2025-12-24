@@ -9,30 +9,33 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- VERİTABANI BAĞLANTISI (RENDER & LOCAL) ---
+// --- VERİTABANI BAĞLANTISI (SQL Server / PostgreSQL Hybrid) ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Render üzerindeyiz (PostgreSQL)
-    try 
+    // Render environment (PostgreSQL)
+    var databaseUri = new Uri(databaseUrl);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    var builderDb = new Npgsql.NpgsqlConnectionStringBuilder
     {
-        var databaseUri = new Uri(databaseUrl);
-        var userInfo = databaseUri.UserInfo.Split(':');
-        int port = databaseUri.Port > 0 ? databaseUri.Port : 5432; // Port fix
-        
-        connectionString = $"Host={databaseUri.Host};Port={port};Database={databaseUri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};Ssl Mode=Require;Trust Server Certificate=true;";
-        
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
-    }
-    catch (Exception ex) { Console.WriteLine($"Bağlantı Hatası: {ex.Message}"); }
+        Host = databaseUri.Host,
+        Port = databaseUri.Port,
+        Username = userInfo[0],
+        Password = userInfo[1],
+        Database = databaseUri.LocalPath.TrimStart('/'),
+        SslMode = Npgsql.SslMode.Prefer,
+        TrustServerCertificate = true
+    };
+    connectionString = builderDb.ToString();
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
 }
 else
 {
-    // Local (SQL Server)
+    // Local environment (SQL Server)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
 }
@@ -63,29 +66,18 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthentication(); // Önce kimlik
-app.UseAuthorization();  // Sonra yetki
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages(); // Identity sayfaları için
+app.MapRazorPages();
 
-    // VERİTABANI MIGRATION & OLUŞTURMA
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        
-        if (!string.IsNullOrEmpty(databaseUrl)) 
-        {
-             // PostgreSQL (Render) -> Migration Kullan
-             context.Database.EnsureDeleted(); // <-- BU SATIR VERİYİ SIFIRLAR!
-             context.Database.Migrate();
-        }
-        else 
-        {
-             // Local (SQL Server) -> EnsureCreated (Hızlı çözüm)
-             context.Database.EnsureCreated();
-        }
-    }
+// OTOMATİK MIGRATION (Veritabanı yoksa oluşturur, varsa günceller)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
+}
 
-    app.Run();
+app.Run();

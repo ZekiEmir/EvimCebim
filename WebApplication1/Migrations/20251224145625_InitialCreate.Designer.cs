@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EvimCebim.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251224111208_InitialCreate_Postgres")]
-    partial class InitialCreate_Postgres
+    [Migration("20251224145625_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
